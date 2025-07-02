@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Entrar com Google - Em breve</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>CineBook</h1>
+        <nav>
+            <a href="{{ url_for('index') }}">Home</a>
+        </nav>
+    </header>
+    <main style="text-align:center; margin-top:5em;">
+        <h2>Entrar com Google</h2>
+        <p style="font-size:1.3em; color:#888;">Funcionalidade disponível em breve!</p>
+        <img src="https://cdn-icons-png.flaticon.com/512/300/300221.png" alt="Em breve" style="width:100px; margin:2em auto; display:block; opacity:0.7;">
+        <a href="{{ url_for('login') }}" style="color:#1db954;">Voltar para login</a>
+    </main>
+</body>
+</html>

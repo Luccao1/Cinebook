@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Perfil | CineBook</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='themes.css') }}">
+</head>
+<body>
+    <header>
+        <h1>CineBook</h1>
+        <nav>
+            <a href="{{ url_for('index') }}">Home</a>
+            <a href="{{ url_for('ranking') }}">Ranking</a>
+            <a href="{{ url_for('profile') }}">Perfil</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </nav>
+    </header>
+    <main style="max-width:600px;margin:2em auto;">
+        <h2>Meu Perfil</h2>
+        <div style="display:flex;align-items:center;gap:2em;">
+            {% if user.profile_pic %}
+                <img src="{{ user.profile_pic }}" alt="Foto de perfil" style="width:90px;height:90px;border-radius:50%;object-fit:cover;">
+            {% endif %}
+            <div>
+                <h3>{{ user.display_name }}</h3>
+                <p><b>Usuário:</b> {{ user.username }}</p>
+                {% if user.badges %}
+                    <div style="margin:0.5em 0;">
+                        {% for badge, val in user.badges.items() if val %}
+                            {% if 'commenter' in badge %}<span title="Comentarista" style="color:#ffb300;font-size:1.5em;">🗨️</span>{% endif %}
+                            {% if 'favoriter' in badge %}<span title="Favoritador" style="color:#e53935;font-size:1.5em;">⭐</span>{% endif %}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                <button id="edit-profile-btn" class="search-btn-grouped" style="margin-top:1em;">Editar perfil</button>
+            </div>
+        </div>
+        <!-- Formulário de edição de perfil (inicialmente oculto) -->
+        <form id="edit-profile-form" method="post" action="{{ url_for('edit_profile') }}" enctype="multipart/form-data" style="display:none;margin-top:2em;background:#222;padding:1.5em;border-radius:1em;box-shadow:0 2px 8px #0001;gap:1em;flex-direction:column;">
+            <label style="color:#fff;">Nome de exibição:<input type="text" name="display_name" value="{{ user.display_name }}" required style="background:#111;color:#fff;"></label>
+            <label style="color:#fff;">Nova foto de perfil:<input type="file" name="profile_pic" accept="image/*" style="background:#111;color:#fff;"></label>
+            <label style="color:#fff;">Nova senha:<input type="password" name="new_password" placeholder="Deixe em branco para não alterar" style="background:#111;color:#fff;"></label>
+            <label style="color:#fff;">Confirme a nova senha:<input type="password" name="confirm_password" placeholder="Repita a nova senha" style="background:#111;color:#fff;"></label>
+            <button type="submit" class="search-btn-grouped">Salvar alterações</button>
+            <button type="button" id="cancel-edit-profile" class="search-advanced-btn">Cancelar</button>
+        </form>
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const btn = document.getElementById('edit-profile-btn');
+            const form = document.getElementById('edit-profile-form');
+            const cancel = document.getElementById('cancel-edit-profile');
+            if(btn && form && cancel) {
+                btn.onclick = () => { form.style.display = 'flex'; btn.style.display = 'none'; };
+                cancel.onclick = () => { form.style.display = 'none'; btn.style.display = 'inline-block'; };
+            }
+        });
+        </script>
+        <h3 style="margin-top:2em;">Filmes Favoritos</h3>
+        {% if favorites %}
+        <ul style="list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:1em;">
+            {% for movie in favorites %}
+            <li style="background:#222;padding:0.5em 1em;border-radius:8px;">
+                <a href="{{ url_for('movie_detail', movie_id=movie.id) }}" style="color:var(--primary);text-decoration:none;">{{ movie.title }}</a>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>Você ainda não favoritou nenhum filme.</p>
+        {% endif %}
+
+        <h3 style="margin-top:2em;">Minhas Listas</h3>
+        {% if user.lists %}
+            {% for list_name, movies in user.lists.items() %}
+                <section style="margin-bottom:1em;">
+                    <b>{{ list_name }}</b>
+                    {% if movies %}
+                        <ul style="list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:1em;">
+                        {% for movie_id in movies %}
+                            <li style="background:#222;padding:0.5em 1em;border-radius:8px;">
+                                <a href="{{ url_for('movie_detail', movie_id=movie_id) }}" style="color:var(--primary);text-decoration:none;">Filme #{{ movie_id }}</a>
+                            </li>
+                        {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p style="color:#bbb;">Lista vazia.</p>
+                    {% endif %}
+                </section>
+            {% endfor %}
+        {% else %}
+            <p>Você ainda não criou nenhuma lista.</p>
+        {% endif %}
+
+        <h3 style="margin-top:2em;">Histórico de Comentários</h3>
+        <ul style="list-style:none;padding:0;">
+        {% for comment in user_comments %}
+            <li style="margin-bottom:1em;background:#f7f7f7;padding:1em;border-radius:0.7em;">
+                <b>{{ comment.movie_title }}</b> — Nota: {{ comment.rating }}<br>
+                <span style="color:#555;">{{ comment.text }}</span>
+            </li>
+        {% else %}
+            <li style="color:#888;">Nenhum comentário encontrado.</li>
+        {% endfor %}
+        </ul>
+    </main>
+</body>
+</html>

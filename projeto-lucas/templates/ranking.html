@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Ranking de Usuários | CineBook</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>CineBook</h1>
+        <nav>
+            <a href="{{ url_for('index') }}">Home</a>
+        </nav>
+    </header>
+    <main style="max-width:600px;margin:2em auto;">
+        <h2>Ranking dos Usuários Mais Ativos</h2>
+        <table style="width:100%;background:#222;border-radius:10px;overflow:hidden;">
+            <tr style="background:#1db954;color:#fff;">
+                <th style="padding:0.7em;">#</th>
+                <th>Usuário</th>
+                <th>Comentários</th>
+            </tr>
+            {% for user in ranking %}
+            <tr style="text-align:center;">
+                <td style="padding:0.5em;">{{ loop.index }}</td>
+                <td style="display:flex;align-items:center;gap:1em;justify-content:center;">
+                    {% if user.profile_pic %}
+                        <img src="{{ user.profile_pic }}" alt="Foto" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">
+                    {% endif %}
+                    <span>{{ user.display_name }}</span>
+                    {% if user.badges %}
+                        <span style="margin-left:0.5em;">
+                        {% for badge, val in user.badges.items() if val %}
+                            {% if 'commenter' in badge %}<span title="Comentarista" style="color:#ffb300;font-size:1.2em;">🗨️</span>{% endif %}
+                            {% if 'favoriter' in badge %}<span title="Favoritador" style="color:#e53935;font-size:1.2em;">⭐</span>{% endif %}
+                        {% endfor %}
+                        </span>
+                    {% endif %}
+                </td>
+                <td>{{ user.count }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% if not ranking %}
+        <p style="text-align:center;color:#bbb;">Nenhum comentário ainda.</p>
+        {% endif %}
+    </main>
+</body>
+</html>

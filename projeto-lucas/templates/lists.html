@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Minhas Listas | CineBook</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='themes.css') }}">
+</head>
+<body>
+    <header>
+        <h1>CineBook</h1>
+        <nav>
+            <a href="{{ url_for('index') }}">Home</a>
+            <a href="{{ url_for('profile') }}">Perfil</a>
+            <a href="{{ url_for('lists') }}">Listas</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </nav>
+    </header>
+    <main style="max-width:700px;margin:2em auto;">
+        <h2>Minhas Listas</h2>
+        <form method="post" style="margin-bottom:2em;">
+            <input type="text" name="list_name" placeholder="Nova lista" required style="padding:0.5em 1em;border-radius:8px;">
+            <button type="submit" style="padding:0.5em 1.2em;border-radius:8px;background:var(--primary);color:#fff;border:none;">Criar Lista</button>
+        </form>
+        {% if user.lists %}
+            {% for list_name, movies in user.lists.items() %}
+                <section style="margin-bottom:2em;">
+                    <h3>{{ list_name }}</h3>
+                    {% if movies %}
+                        <ul style="list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:1em;">
+                        {% for movie_id in movies %}
+                            <li style="background:#222;padding:0.5em 1em;border-radius:8px;">
+                                <form method="post" action="{{ url_for('remove_from_list', movie_id=movie_id) }}" style="display:inline;">
+                                    <input type="hidden" name="list_name" value="{{ list_name }}">
+                                    <button type="submit" style="background:none;border:none;color:#e53935;cursor:pointer;">✖</button>
+                                </form>
+                                <a href="{{ url_for('movie_detail', movie_id=movie_id) }}" style="color:var(--primary);text-decoration:none;">Filme #{{ movie_id }}</a>
+                            </li>
+                        {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p style="color:#bbb;">Lista vazia.</p>
+                    {% endif %}
+                </section>
+            {% endfor %}
+        {% else %}
+            <p>Você ainda não criou nenhuma lista.</p>
+        {% endif %}
+    </main>
+</body>
+</html>

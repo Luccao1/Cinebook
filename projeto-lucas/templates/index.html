@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CineBook</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='cinema-top.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='themes.css') }}">
+    <script>
+    // Tema acessível: aplica classe no body
+    function setTheme(theme) {
+      document.body.className = 'theme-' + theme;
+      localStorage.setItem('cinebook_theme', theme);
+    }
+    function setFontSize(size) {
+      document.documentElement.style.fontSize = size + 'px';
+      localStorage.setItem('cinebook_fontsize', size);
+      document.querySelectorAll('.font-size-btn').forEach(btn => btn.classList.remove('active'));
+      if(size==15) document.querySelectorAll('.font-size-btn')[0].classList.add('active');
+      if(size==16) document.querySelectorAll('.font-size-btn')[1].classList.add('active');
+      if(size==19) document.querySelectorAll('.font-size-btn')[2].classList.add('active');
+    }
+    window.onload = function() {
+      var theme = localStorage.getItem('cinebook_theme') || 'dark';
+      setTheme(theme);
+      var fz = localStorage.getItem('cinebook_fontsize') || 16;
+      setFontSize(Number(fz));
+    }
+    </script>
+</head>
+<body>
+    <div class="cinema-top-bg"></div>
+    <header>
+        <h1>CineBook</h1>
+        <nav>
+            <a href="{{ url_for('index') }}">Home</a>
+            <!-- Seletor de tema acessível -->
+            <select onchange="setTheme(this.value)" aria-label="Selecionar tema" style="margin:0 1em;padding:0.2em 0.5em;border-radius:8px;">
+                <option value="dark">🌑 Escuro</option>
+                <option value="light">🌕 Claro</option>
+                <option value="contrast">⚡ Alto Contraste</option>
+                <option value="protanopia">🔴 Protanopia</option>
+                <option value="deuteranopia">🟢 Deuteranopia</option>
+                <option value="tritanopia">🔵 Tritanopia</option>
+                <option value="anime">🎌 Anime</option>
+            </select>
+            <!-- Controle de fonte acessível -->
+            <span class="font-size-controls" aria-label="Ajuste de fonte">
+                <button class="font-size-btn" onclick="setFontSize(15);return false;" aria-label="Fonte pequena">A-</button>
+                <button class="font-size-btn" onclick="setFontSize(16);return false;" aria-label="Fonte padrão">A</button>
+                <button class="font-size-btn" onclick="setFontSize(19);return false;" aria-label="Fonte grande">A+</button>
+            </span>
+            {% if not session.get('user_id') %}
+                <a href="{{ url_for('login') }}">Login</a>
+                <a href="{{ url_for('register') }}">Register</a>
+            {% endif %}
+            <a href="{{ url_for('ranking') }}">Ranking</a>
+            <a href="{{ url_for('lists') }}">Listas</a>
+            {% if session.get('user_id') %}
+                <a href="{{ url_for('notifications') }}" style="position:relative;">
+                    Notificações
+                    {% if notif_count > 0 %}
+                        <span style="background:#b71c1c;color:#fff;border-radius:50%;padding:0.2em 0.6em;font-size:0.9em;position:absolute;top:-8px;right:-18px;">{{ notif_count }}</span>
+                    {% endif %}
+                </a>
+                <a href="{{ url_for('profile') }}">Perfil</a>
+                <a href="{{ url_for('logout') }}">Logout</a>
+            {% endif %}
+            {% if logged_user and logged_user.profile_pic %}
+                <img src="{{ logged_user.profile_pic }}" alt="Foto de perfil" class="profile-pic-header" style="width:40px;height:40px;border-radius:50%;object-fit:cover;margin-left:1em;vertical-align:middle;">
+            {% endif %}
+        </nav>
+    </header>
+    <main>
+        <!-- Banner de Destaque com Trailer -->
+        <section class="banner">
+            <div class="banner-content">
+                <h2>Destaque: {{ featured_movie.title if featured_movie else 'Filme em Destaque' }}</h2>
+                <p>{{ featured_movie.overview if featured_movie else 'Confira os melhores lançamentos e trailers!' }}</p>
+                {% if featured_movie and featured_movie.trailer_url %}
+                <div class="trailer-container" style="display: flex; justify-content: center; align-items: center; margin: 1em 0;">
+                    <iframe width="560" height="315" src="{{ featured_movie.trailer_url }}" title="Trailer" allowfullscreen style="max-width:100%;"></iframe>
+                </div>
+                {% endif %}
+            </div>
+        </section>
+        <!-- Barra de Busca e Filtros -->
+        <!-- Botão para abrir busca avançada -->
+        <div class="search-toggle-container">
+            <form method="get" action="{{ url_for('search') }}" class="search-bar-simple">
+                <input type="text" name="q" placeholder="Buscar por título, ator, diretor..." value="{{ query or '' }}">
+                <button type="submit" class="search-btn-grouped"><span class="search-icon">🔍</span> Pesquisar</button>
+                <button type="button" id="toggle-advanced-search" class="search-advanced-btn">Busca avançada</button>
+            </form>
+        </div>
+        <!-- Busca avançada oculta -->
+        <form method="get" action="{{ url_for('search') }}" class="search-bar search-bar-grouped" id="advanced-search-form" style="display:none; margin-top:1rem;">
+            <div class="search-fields">
+                <input type="text" name="q" placeholder="Buscar por título, ator, diretor, país, idioma..." value="{{ query or '' }}">
+                <select name="genre">
+                    <option value="">Gênero</option>
+                    {% for genre in genres %}
+                    <option value="{{ genre.id }}" {% if request.args.get('genre') == genre.id|string %}selected{% endif %}>{{ genre.name }}</option>
+                    {% endfor %}
+                </select>
+                <input type="number" name="year" placeholder="Ano" value="{{ request.args.get('year', '') }}">
+                <input type="number" step="0.1" min="0" max="10" name="min_vote" placeholder="Nota mínima" value="{{ request.args.get('min_vote', '') }}">
+                <input type="text" name="country" placeholder="País" value="{{ request.args.get('country', '') }}">
+                <input type="text" name="language" placeholder="Idioma (ex: pt, en)" value="{{ request.args.get('language', '') }}">
+                <input type="number" name="min_duration" placeholder="Duração mín. (min)" value="{{ request.args.get('min_duration', '') }}">
+                <input type="number" name="max_duration" placeholder="Duração máx. (min)" value="{{ request.args.get('max_duration', '') }}">
+                <select name="certification">
+                    <option value="">Faixa etária</option>
+                    <option value="L" {% if request.args.get('certification') == 'L' %}selected{% endif %}>Livre</option>
+                    <option value="10" {% if request.args.get('certification') == '10' %}selected{% endif %}>10+</option>
+                    <option value="12" {% if request.args.get('certification') == '12' %}selected{% endif %}>12+</option>
+                    <option value="14" {% if request.args.get('certification') == '14' %}selected{% endif %}>14+</option>
+                    <option value="16" {% if request.args.get('certification') == '16' %}selected{% endif %}>16+</option>
+                    <option value="18" {% if request.args.get('certification') == '18' %}selected{% endif %}>18+</option>
+                </select>
+            </div>
+            <button type="submit" class="search-btn-grouped">
+                <span class="search-icon">🔍</span> Buscar
+            </button>
+        </form>
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var btn = document.getElementById('toggle-advanced-search');
+            var adv = document.getElementById('advanced-search-form');
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                adv.style.display = adv.style.display === 'none' ? 'flex' : 'none';
+            });
+        });
+        </script>
+        <!-- Seções de Destaques -->
+        <section class="highlights">
+            <h2>Populares</h2>
+            <div class="movie-list">
+                {% for movie in popular_movies %}
+                <div class="movie-item">
+                    <a href="{{ url_for('movie_detail', movie_id=movie.id) }}">
+                        <img src="https://image.tmdb.org/t/p/w200{{ movie.poster_path }}" alt="{{ movie.title }}">
+                        <h3>{{ movie.title }}</h3>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+            <h2>Lançamentos</h2>
+            <div class="movie-list">
+                {% for movie in latest_movies %}
+                <div class="movie-item">
+                    <a href="{{ url_for('movie_detail', movie_id=movie.id) }}">
+                        <img src="https://image.tmdb.org/t/p/w200{{ movie.poster_path }}" alt="{{ movie.title }}">
+                        <h3>{{ movie.title }}</h3>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+            <h2>Recomendados</h2>
+            <div class="movie-list">
+                {% for movie in recommended_movies %}
+                <div class="movie-item">
+                    <a href="{{ url_for('movie_detail', movie_id=movie.id) }}">
+                        <img src="https://image.tmdb.org/t/p/w200{{ movie.poster_path }}" alt="{{ movie.title }}">
+                        <h3>{{ movie.title }}</h3>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        <!-- Catálogo de Filmes (padrão) -->
+        <h2>Catálogo</h2>
+        <div class="movie-list">
+            {% if movies %}
+                {% for movie in movies %}
+                    <div class="movie-item">
+                        <a href="{{ url_for('movie_detail', movie_id=movie.id) }}" style="color:inherit;text-decoration:none;">
+                            <h3>{{ movie.title }}</h3>
+                            <img src="https://image.tmdb.org/t/p/w200{{ movie.poster_path }}" alt="{{ movie.title }}">
+                        </a>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>Nenhum filme encontrado.</p>
+            {% endif %}
+        </div>
+        <div style="text-align:center; margin:2em 0;">
+            {% if page > 1 %}
+                <a href="{{ url_for('index', page=page-1) }}"><button>&laquo; Anterior</button></a>
+            {% endif %}
+            <span style="margin:0 1em;">Página {{ page }}</span>
+            {% if page < total_pages %}
+                <a href="{{ url_for('index', page=page+1) }}"><button>Próxima &raquo;</button></a>
+            {% endif %}
+        </div>
+    </main>
+</body>
+</html>

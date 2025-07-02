@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ movie.title }} | CineBook</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>CineBook</h1>
+        <nav>
+            <a href="{{ url_for('index') }}">Home</a>
+            {% if not session.get('user_id') %}
+                <a href="{{ url_for('login') }}">Login</a>
+                <a href="{{ url_for('register') }}">Register</a>
+            {% endif %}
+            <a href="{{ url_for('logout') }}">Logout</a>
+            {% if logged_user and logged_user.profile_pic %}
+                <img src="{{ logged_user.profile_pic }}" alt="Foto de perfil" class="profile-pic-header" style="width:40px;height:40px;border-radius:50%;object-fit:cover;margin-left:1em;vertical-align:middle;">
+            {% endif %}
+        </nav>
+    </header>
+    <main>
+        <div class="movie-detail-full" style="width:100vw;min-height:100vh;display:flex;flex-direction:row;align-items:flex-start;background:#181818;">
+            <img src="https://image.tmdb.org/t/p/w400{{ movie.poster_path }}" alt="{{ movie.title }}" style="width:260px;max-width:32vw;min-width:160px;height:90vh;object-fit:cover;border-radius:0 20px 20px 0;box-shadow:0 4px 32px #000a;">
+            <div style="flex:1;min-width:0;padding:3em 2em 2em 2em;display:flex;flex-direction:column;gap:1em;">
+                <h2 style="font-size:2.2em;">{{ movie.title }}</h2>
+                <h3>Sinopse</h3>
+                <p>{{ movie.overview }}</p>
+                <p><strong>Ano de Lançamento:</strong> {{ movie.release_date[:4] }}</p>
+                <p><strong>Duração:</strong> {{ movie.runtime }} min</p>
+                <p><strong>Gênero:</strong> {% for genre in movie.genres %}{{ genre.name }}{% if not loop.last %}, {% endif %}{% endfor %}</p>
+                <p><strong>Elenco:</strong> {% if cast %}{% for actor in cast[:5] %}{{ actor.name }}{% if not loop.last %}, {% endif %}{% endfor %}{% else %}N/A{% endif %}</p>
+                <p><strong>Classificação:</strong> {{ movie.certification or 'N/A' }}</p>
+                <p><strong>Nota:</strong> {{ movie.vote_average }}
+                {% if avg_rating %}
+                  <span style="margin-left:1em;color:#ffb300;">Avaliação dos usuários: <b>{{ avg_rating }}★</b></span>
+                {% endif %}
+                </p>
+                <p><a href="https://www.justwatch.com/br/busca?q={{ movie.title|urlencode }}" target="_blank" style="color:#1db954;">Onde assistir</a></p>
+                {% if trailer_url %}
+                <div class="trailer-container" style="margin:2em 0;max-width:700px;">
+                    <iframe width="100%" height="350" src="{{ trailer_url }}" title="Trailer" allowfullscreen style="border-radius:8px;"></iframe>
+                </div>
+                {% endif %}
+                <!-- Espaço para avaliações e comentários -->
+                <section class="comments">
+                    <h3>Avaliações e Comentários</h3>
+                    {% if comments %}
+                        {% for comment in comments %}
+                            <div class="comment">
+                                {% if comment.profile_pic %}
+                                    <img src="{{ comment.profile_pic }}" alt="Foto de perfil" class="profile-pic-preview" style="width:40px;height:40px;vertical-align:middle;">
+                                {% endif %}
+                                <strong>{{ comment.user_display_name or comment.user }}</strong> - <span>{{ comment.rating }}★</span>
+                                <p>{{ comment.text }}</p>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p>Seja o primeiro a comentar!</p>
+                    {% endif %}
+                    {% if session.get('user_id') %}
+                    <form method="post">
+                        <label for="rating">Nota:</label>
+                        <select name="rating" id="rating">
+                            {% for i in range(1,6) %}<option value="{{ i }}">{{ i }}</option>{% endfor %}
+                        </select>
+                        <textarea name="text" placeholder="Seu comentário..."></textarea>
+                        <button type="submit">Enviar</button>
+                    </form>
+                    {% else %}
+                    <p><a href="{{ url_for('login') }}">Faça login para comentar</a></p>
+                    {% endif %}
+                </section>
+                <!-- Botões de compartilhamento social -->
+                <div class="share-buttons" style="margin:1em 0;display:flex;gap:1em;align-items:center;">
+                    <span style="color:#bbb;">Compartilhar:</span>
+                    <a href="https://wa.me/?text={{ request.url|urlencode }}" target="_blank" title="Compartilhar no WhatsApp" style="font-size:1.5em;">🟢</a>
+                    <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.url|urlencode }}" target="_blank" title="Compartilhar no Facebook" style="font-size:1.5em;">🔵</a>
+                    <a href="https://twitter.com/intent/tweet?url={{ request.url|urlencode }}&text={{ movie.title|urlencode }}" target="_blank" title="Compartilhar no X/Twitter" style="font-size:1.5em;">⚫</a>
+                    <button onclick="navigator.clipboard.writeText(window.location.href);this.innerText='Copiado!';setTimeout(()=>this.innerText='🔗',1000);" title="Copiar link" style="background:none;border:none;cursor:pointer;font-size:1.5em;">🔗</button>
+                </div>
+                <!-- Botão de Favoritar -->
+                {% if session.get('user_id') %}
+                <form method="post" action="{{ url_for('toggle_favorite', movie_id=movie.id) }}" style="margin-bottom:1em;">
+                    {% if is_favorite %}
+                        <button type="submit" class="favorite-btn" style="background:#b71c1c;color:#fff;padding:0.5em 1.2em;border:none;border-radius:20px;cursor:pointer;">★ Remover dos Favoritos</button>
+                    {% else %}
+                        <button type="submit" class="favorite-btn" style="background:#b71c1c;color:#fff;padding:0.5em 1.2em;border:none;border-radius:20px;cursor:pointer;">☆ Adicionar aos Favoritos</button>
+                    {% endif %}
+                </form>
+                {% endif %}
+                <!-- Gráfico de distribuição de notas -->
+                <div style="margin:1.5em 0;">
+                  <h4>Distribuição das notas dos usuários</h4>
+                  <div style="display:flex;align-items:end;gap:0.3em;height:90px;">
+                    {% for count in rating_distribution %}
+                      <div style="width:18px;height:{{ 8+count*12 }}px;background:#ffb300;border-radius:4px 4px 0 0;display:flex;align-items:flex-end;justify-content:center;position:relative;">
+                        {% if count > 0 %}<span style="position:absolute;top:-1.5em;font-size:0.9em;color:#fff;">{{ count }}</span>{% endif %}
+                        <span style="position:absolute;bottom:-1.3em;font-size:0.9em;color:#fff;">{{ loop.index0 }}</span>
+                      </div>
+                    {% endfor %}
+                  </div>
+                </div>
+                <!-- Recomendações -->
+                {% if recommendations %}
+                <div style="margin:2em 0 1em 0;">
+                  <h4>Recomendações para você</h4>
+                  <div style="display:flex;gap:1em;flex-wrap:wrap;">
+                    {% for rec in recommendations %}
+                      <a href="{{ url_for('movie_detail', movie_id=rec.id) }}" style="text-decoration:none;color:inherit;">
+                        <div style="width:110px;text-align:center;">
+                          <img src="https://image.tmdb.org/t/p/w200{{ rec.poster_path }}" alt="{{ rec.title }}" style="width:100px;height:150px;object-fit:cover;border-radius:0.5em;box-shadow:0 2px 8px #0005;">
+                          <div style="font-size:0.95em;margin-top:0.3em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ rec.title }}</div>
+                        </div>
+                      </a>
+                    {% endfor %}
+                  </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </main>
+</body>
+</html>

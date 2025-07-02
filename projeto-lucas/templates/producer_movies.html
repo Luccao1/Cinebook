@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ producer_name or 'Filmes da Produtora' }} | CineBook</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>CineBook</h1>
+        <nav>
+            <a href="{{ url_for('index') }}">Home</a>
+            <a href="{{ url_for('producers') }}">Produtoras</a>
+        </nav>
+    </header>
+    <main>
+        <h2>Filmes de {{ producer_name or 'Produtora' }}</h2>
+        <form method="get" style="margin-bottom:2em;display:flex;gap:1em;align-items:center;">
+            <select name="genre">
+                <option value="">Gênero</option>
+                {% for genre in genres %}
+                <option value="{{ genre.id }}" {% if genre.id|string == genre %}selected{% endif %}>{{ genre.name }}</option>
+                {% endfor %}
+            </select>
+            <input type="number" name="year" placeholder="Ano" value="{{ year or '' }}">
+            <button type="submit">Filtrar</button>
+        </form>
+        <div class="movie-list">
+            {% for movie in movies %}
+            <div class="movie-item">
+                <a href="{{ url_for('movie_detail', movie_id=movie.id) }}">
+                    <img src="https://image.tmdb.org/t/p/w200{{ movie.poster_path }}" alt="{{ movie.title }}">
+                    <h3>{{ movie.title }}</h3>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+        <div style="text-align:center; margin:2em 0;">
+            {% if page > 1 %}
+                <a href="{{ url_for('producer_movies', producer_id=producer_id, year=year, genre=genre, page=page-1) }}"><button>&laquo; Anterior</button></a>
+            {% endif %}
+            <span style="margin:0 1em;">Página {{ page }}</span>
+            {% if page < total_pages %}
+                <a href="{{ url_for('producer_movies', producer_id=producer_id, year=year, genre=genre, page=page+1) }}"><button>Próxima &raquo;</button></a>
+            {% endif %}
+        </div>
+    </main>
+</body>
+</html>

@@ -1,0 +1,74 @@
+/* Temas acessíveis para CineBook */
+:root {
+  --bg: #111;
+  --fg: #fff;
+  --primary: #1db954;
+  --header-bg: #222;
+  --banner-bg: #181818;
+}
+body.theme-dark {
+  --bg: #111;
+  --fg: #fff;
+  --primary: #1db954;
+  --header-bg: #222;
+  --banner-bg: #181818;
+}
+body.theme-light {
+  --bg: #f5f5f5;
+  --fg: #222;
+  --primary: #1976d2;
+  --header-bg: #fff;
+  --banner-bg: #e3e3e3;
+}
+body.theme-contrast {
+  --bg: #000;
+  --fg: #fff200;
+  --primary: #ff00ff;
+  --header-bg: #000;
+  --banner-bg: #222;
+}
+body.theme-protanopia {
+  --bg: #222;
+  --fg: #fff;
+  --primary: #00bfff;
+  --header-bg: #333;
+  --banner-bg: #2a2a2a;
+}
+body.theme-deuteranopia {
+  --bg: #222;
+  --fg: #fff;
+  --primary: #ffb300;
+  --header-bg: #333;
+  --banner-bg: #2a2a2a;
+}
+body.theme-tritanopia {
+  --bg: #222;
+  --fg: #fff;
+  --primary: #e53935;
+  --header-bg: #333;
+  --banner-bg: #2a2a2a;
+}
+body.theme-anime {
+  --bg: #f7e6ff;
+  --fg: #2d0036;
+  --primary: #ff4081;
+  --header-bg: #fff0fa;
+  --banner-bg: #ffe3f7;
+  background-image: url('/static/anime-bg.png');
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+body {
+  background: var(--bg);
+  color: var(--fg);
+}
+header {
+  background: var(--header-bg);
+  color: var(--fg);
+}
+.banner {
+  background: var(--banner-bg);
+}
+a, button, .primary {
+  color: var(--primary) !important;
+}

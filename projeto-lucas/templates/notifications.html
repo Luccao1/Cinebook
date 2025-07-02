@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Notificações | CineBook</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>CineBook</h1>
+        <nav>
+            <a href="{{ url_for('index') }}">Home</a>
+            <a href="{{ url_for('ranking') }}">Ranking</a>
+            <a href="{{ url_for('notifications') }}">Notificações</a>
+            {% if session.get('user_id') %}
+                <a href="{{ url_for('logout') }}">Logout</a>
+            {% endif %}
+        </nav>
+    </header>
+    <main style="max-width:600px;margin:2em auto;">
+        <h2>Notificações</h2>
+        {% if notifications %}
+            <ul style="list-style:none;padding:0;">
+            {% for notif in notifications %}
+                <li style="background:#222;margin-bottom:1em;padding:1em;border-radius:8px;">
+                    {% if notif.type == 'new_comment' %}
+                        <span><b>{{ notif.from_display_name }}</b> comentou em <b>{{ notif.movie_title }}</b> que está nos seus favoritos.</span>
+                        <form method="post" action="{{ url_for('read_notification', notif_id=notif._id) }}" style="display:inline;float:right;">
+                            <button type="submit" style="background:#b71c1c;color:#fff;border:none;padding:0.3em 1em;border-radius:20px;cursor:pointer;">Marcar como lida</button>
+                        </form>
+                    {% endif %}
+                </li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <p>Você não possui notificações novas.</p>
+        {% endif %}
+    </main>
+</body>
+</html>

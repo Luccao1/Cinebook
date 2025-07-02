@@ -1,0 +1,6 @@
+Flask
+python-dotenv
+requests
+pymongo
+werkzeug.utils
+werkzeug.security
